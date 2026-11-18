@@ -1,0 +1,4 @@
+# La clé AIS ne doit JAMAIS être envoyée sur GitHub
+.streamlit/secrets.toml
+.env
+__pycache__/

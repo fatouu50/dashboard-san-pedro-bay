@@ -1,0 +1,8 @@
+source,adresse,date_recuperation,remarque
+Port of Los Angeles - volumes mensuels,https://portoflosangeles.org/business/statistics/container-statistics,2026-11-18,rempli automatiquement par recuperer_volumes.py
+Port of Long Beach - volumes mensuels,https://polb.com/business/port-statistics,2026-11-18,INACCESSIBLE depuis Djibouti (Access Denied) ; archive web vide (contenu dynamique)
+Banque mondiale - CPPI 2023,https://openknowledge.worldbank.org/entities/publication/87d77e6d-6b7b-4bbe-b292-ae0f3b4827e8,2026-11-18,"PDF « The Container Port Performance Index 2023 », Table E.1 (classement agrégé, pas de score unique publié)"
+Banque mondiale - CPPI 2024,https://openknowledge.worldbank.org/entities/publication/fa57ba78-0402-4eb4-b168-51708cf526f7,2026-11-18,"PDF « The CPPI 2020 to 2024 – Trends and Lessons Learned » (sept. 2025), Table 2.1 et annexe ; scores 2023 et 2024 de la même série"
+CNUCED - UNCTADstat Port calls and performance,https://unctadstat.unctad.org/datacentre/ (Port calls and performance),2026-11-18,"BULK US_PortCalls et US_PortCallsArrivals, mis à jour le 28/03/2024 ; porte-conteneurs ; Djibouti non publié seul"
+AIS - aisstream.io,https://aisstream.io,automatique,date affichée sur l'écran
+Météo - Open-Meteo (vent) et Open-Meteo Marine (vagues),https://open-meteo.com,automatique,date affichée sur l'écran
