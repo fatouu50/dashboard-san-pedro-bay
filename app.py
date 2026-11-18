@@ -215,6 +215,9 @@ div[class*="st-key-carte_"] {{ background: white; border-radius: 12px; padding: 
 div[data-testid="stExpander"] details {{ background: white; border-radius: 12px; }}
 .note {{ color: #EFE3F7; font-size: 13px; margin: -2px 0 10px 0; }}
 .note b {{ color: white; }}
+.lecture {{ background: #F7F0FA; border-left: 3px solid {ROSE}; border-radius: 6px; padding: 8px 12px;
+            font-size: 12.5px; color: #2b2b2b; margin: 4px 0 6px 0; }}
+.lecture b {{ color: {VIOLET}; }}
 .trace {{ background: white; border-radius: 12px; padding: 12px 18px; margin-top: 18px; border-left: 4px solid {ROSE};
           box-shadow: 0 1px 6px rgba(46,23,70,0.08); font-size: 12px; color: #333; }}
 .trace b {{ color: {VIOLET}; }}
@@ -255,6 +258,11 @@ def tuile_vide(nom_icone, titre, message):
 
 def section(texte):
     st.markdown(f'<div class="section">{texte}</div>', unsafe_allow_html=True)
+
+
+def lecture(texte):
+    # Interprétation calculée à partir des données : elle se met à jour avec elles
+    st.markdown(f'<div class="lecture"><b>Lecture.</b> {texte}</div>', unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------- 5. En-tête
@@ -392,10 +400,22 @@ else:
     with g.container(border=True, key="carte_1"):
         st.plotly_chart(joli(px.line(deux, x="date", y="total", color="port", labels={"total": "EVP", "date": ""},
                                      title="EVP PAR MOIS DEPUIS 2019")), width="stretch")
+        douze, avant = serie[-12:].sum(), serie[-24:-12].sum()
+        pic = serie.idxmax()
+        lecture(f"Sur les 12 derniers mois, Los Angeles a traité {douze/1e6:.2f} M EVP, soit "
+                f"{(douze/avant - 1)*100:+.1f} % par rapport aux 12 mois précédents. Le record de la période est "
+                f"{pic:%m/%Y} ({serie.max()/1e6:.2f} M EVP). L'activité suit un cycle annuel marqué, avec des creux "
+                "en début d'année, ce qui justifie un modèle saisonnier.")
     with d.container(border=True, key="carte_2"):
         detail = pola.melt(id_vars="date", value_vars=["imports", "exports", "vides"], var_name="flux", value_name="EVP")
         st.plotly_chart(joli(px.bar(detail, x="date", y="EVP", color="flux", labels={"date": ""},
                                     title="LOS ANGELES : IMPORTATIONS, EXPORTATIONS, VIDES")), width="stretch")
+        an_dernier = pola[pola["date"] > pola["date"].max() - pd.DateOffset(months=12)]
+        t = an_dernier["total"].sum()
+        pi, pe, pv = (an_dernier[c].sum() / t * 100 for c in ("imports", "exports", "vides"))
+        lecture(f"Sur 12 mois : importations {pi:.0f} %, exportations {pe:.0f} %, vides {pv:.0f} % des EVP. "
+                f"Los Angeles importe {pi/pe:.1f} fois plus qu'il n'exporte : les conteneurs arrivent pleins "
+                "d'Asie et repartent souvent vides. C'est ce déséquilibre qui explique la part élevée des vides.")
 
     if prevision is not None:
         with st.container(border=True, key="carte_3"):
@@ -409,6 +429,17 @@ else:
                             marker=dict(color=VIOLET_FONCE, size=11, symbol="x"))
             fig.update_layout(title=f"PRÉVISION 6 MOIS ET MOIS ANORMAUX · {perimetre.upper()}", yaxis_title="EVP")
             st.plotly_chart(joli(fig, 380), width="stretch")
+            meilleur = "fait mieux que" if mae < mae_reference else "ne fait pas mieux que"
+            recent = f" Le plus récent est {anomalies.index[-1]:%m/%Y}." if len(anomalies) else ""
+            lecture(f"Le modèle prévoit entre {prevision['prevu'].min()/1e6:.2f} et {prevision['prevu'].max()/1e6:.2f} M EVP "
+                    f"par mois jusqu'en {prevision['date'].iloc[-1]:%m/%Y}, à ± {mae/1e3:.0f} k EVP près. Il {meilleur} la "
+                    f"référence « même mois l'an dernier » ({mae/1e3:.0f} k contre {mae_reference/1e3:.0f} k EVP d'erreur). "
+                    f"{len(anomalies)} mois anormaux sont détectés depuis 2019.{recent} Ces écarts coïncident souvent avec des chocs "
+                    "(rattrapage post-Covid, anticipation de droits de douane) que le modèle ne peut pas prévoir : "
+                    "leur cause est à vérifier avant de planifier.")
+            if mae >= mae_reference:
+                lecture("Le modèle n'est pas plus précis que la référence simple : la fourchette reste utile pour "
+                        "dimensionner les moyens, mais il faudrait l'améliorer (variables externes, autre modèle).")
             st.caption(f"Erreur moyenne du modèle (MAE, 12 derniers mois) : {mae:,.0f} EVP par mois. "
                        f"Référence « même mois l'an dernier » : {mae_reference:,.0f} EVP. "
                        f"Un mois est anormal si l'écart au modèle dépasse {SEUIL_ANOMALIE} écarts-types.")
@@ -430,6 +461,13 @@ with g.container(border=True, key="carte_4"):
                      title="RANG CPPI PAR ÉDITION (1 = MEILLEUR)", labels={"color": "Édition", "port": ""})
         fig.update_yaxes(categoryorder="total descending")
         st.plotly_chart(joli(fig, 360), width="stretch")
+        dern = cppi["edition"].max()
+        r = cppi[cppi["edition"] == dern].set_index("port")["rang"]
+        r0 = cppi[cppi["edition"] == dern - 1].set_index("port")["rang"]
+        lecture(f"En {dern}, Los Angeles est {int(r['Los Angeles'])}e et Long Beach {int(r['Long Beach'])}e : le complexe "
+                f"reste dans le dernier quart du classement, malgré un gain de {int(r0['Los Angeles'] - r['Los Angeles'])} "
+                f"places pour Los Angeles. Djibouti progresse aussi ({int(r0['Djibouti'])}e → {int(r['Djibouti'])}e). "
+                "Les ports les plus efficaces sont des hubs de transbordement, comme Yangshan et Tanger Med.")
 with m.container(border=True, key="carte_5"):
     if cnuced.empty:
         st.warning("CNUCED indisponible.")
@@ -440,12 +478,24 @@ with m.container(border=True, key="carte_5"):
                      title=f"TEMPS MÉDIAN AU PORT, JOURS ({an})", labels={"temps_median_jours": "jours", "pays": ""})
         fig.update_traces(marker_color=[ROSE if p == "États-Unis" else MAUVE for p in tps["pays"]])
         st.plotly_chart(joli(fig, 360), width="stretch")
+        t_us = tps.set_index("pays").loc["États-Unis", "temps_median_jours"]
+        t_mo = tps.set_index("pays").loc["Monde", "temps_median_jours"]
+        lecture(f"Aux États-Unis, un porte-conteneurs reste en médiane {t_us:.2f} jour au port, soit "
+                f"{(t_us/t_mo - 1)*100:+.0f} % par rapport à la moyenne mondiale ({t_mo:.2f} jour). "
+                "C'est cohérent avec le mauvais rang CPPI de Los Angeles et Long Beach.")
 with d.container(border=True, key="carte_6"):
     if not cnuced.empty:
         esc = cnuced[(cnuced["pays"] != "Monde")]
         fig = px.bar(esc, x="escales", y="pays", color=esc["annee"].astype(str), barmode="group", orientation="h", text_auto=",.0f",
                      title="ESCALES DE PORTE-CONTENEURS", labels={"color": "Année", "pays": ""})
         st.plotly_chart(joli(fig, 360), width="stretch")
+        e = cnuced.pivot(index="pays", columns="annee", values="escales")
+        a1, a0 = e.columns.max(), e.columns.max() - 1
+        ea = "Afrique de l'Est (région de Djibouti)"
+        lecture(f"Entre {a0} et {a1}, les escales en Afrique de l'Est passent de {e.loc[ea, a0]:.0f} à "
+                f"{e.loc[ea, a1]:.0f} ({(e.loc[ea, a1]/e.loc[ea, a0] - 1)*100:+.0f} %), contre "
+                f"{(e.loc['États-Unis', a1]/e.loc['États-Unis', a0] - 1)*100:+.0f} % aux États-Unis. Cette hausse est "
+                "cohérente avec la crise de la mer Rouge, qui a reporté du transbordement vers Djibouti.")
 
 # ---------------------------------------------------------------- 9. En direct
 section("En direct : navires et météo du port")
@@ -462,6 +512,12 @@ with g.container(border=True, key="carte_7"):
                              title=f"NAVIRES AUTOUR DU PORT · {len(zone)} navires · {ais['capture_utc'].iloc[0]}")
         fig.update_traces(marker=dict(size=13, opacity=0.9))
         st.plotly_chart(joli(fig, 430), width="stretch")
+        if len(zone):
+            parts = zone["statut"].value_counts()
+            detail_statut = ", ".join(f"{n} {s.lower()}" for s, n in parts.items())
+            lecture(f"{len(zone)} navires visibles au moment de la capture : {detail_statut}. "
+                    "Un nombre élevé de navires au mouillage signalerait une file d'attente avant quai. "
+                    "La couverture AIS gratuite est partielle : ce chiffre est un minimum.")
 with d.container(border=True, key="carte_8"):
     if meteo is None:
         st.warning("Météo indisponible pour le moment.")
@@ -473,6 +529,13 @@ with d.container(border=True, key="carte_8"):
         fig = px.line(meteo_h, x="heure", y="vagues", title="HAUTEUR DES VAGUES (m)", labels={"heure": ""})
         fig.add_hline(y=VAGUE_ALERTE, line_dash="dash", line_color=ROSE, annotation_text="alerte")
         st.plotly_chart(joli(fig, 205), width="stretch")
+        h_raf = meteo_h.loc[meteo_h["rafales"].idxmax()]
+        h_vag = meteo_h.loc[meteo_h["vagues"].idxmax()]
+        etat_raf = "au-dessus" if h_raf["rafales"] >= RAFALE_VIGILANCE else "en dessous"
+        etat_vag = "au-dessus" if h_vag["vagues"] >= VAGUE_ALERTE else "en dessous"
+        lecture(f"Rafales maximales de {h_raf['rafales']:.0f} km/h le {h_raf['heure']:%d/%m à %Hh} ({etat_raf} du seuil de "
+                f"vigilance) ; vagues jusqu'à {h_vag['vagues']:.1f} m le {h_vag['heure']:%d/%m à %Hh} ({etat_vag} du seuil "
+                "d'alerte). Ces pics guident le calendrier des entrées de navires.")
 
 # ---------------------------------------------------------------- 10. Recommandations
 section("Recommandations d'action")

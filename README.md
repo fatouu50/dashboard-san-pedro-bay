@@ -7,8 +7,8 @@ Tableau de bord Streamlit qui montre comment se porte le complexe portuaire de S
 
 ## Liens
 
-- Tableau de bord en ligne : *(lien Streamlit Cloud à ajouter)*
-- Fiche de conception : Google Docs « Fiche de conception – Tableau de bord San Pedro Bay »
+- Tableau de bord en ligne : https://san-pedro-bay.streamlit.app/
+- Fiche de conception : `docs/fiche_de_conception.pdf`
 
 ## Lancer le tableau de bord
 
@@ -58,7 +58,8 @@ Voir `data/sources.csv` (adresse et date de récupération de chaque source), é
 1. **Prévision avec marge d'incertitude** : lissage exponentiel de Holt-Winters (tendance additive, saisonnalité de 12 mois). L'erreur moyenne (MAE) est mesurée sur les 12 derniers mois, le modèle étant entraîné sur les mois d'avant. La fourchette affichée vaut prévision ± MAE. La MAE est comparée à une référence simple : « même mois de l'année précédente ».
 2. **Détection d'anomalies** : un mois est anormal si l'écart entre le réel et le modèle dépasse 2 écarts-types.
 3. **Alerte météo** : vigilance si rafales ≥ 40 km/h, alerte si rafales ≥ 60 km/h ou vagues ≥ 2 m dans les 48 h.
-4. **Recommandations** : règles simples appliquées aux indicateurs (pic prévu, mois anormal récent, part de vides élevée, météo). Le système recommande une action, le responsable de la planification la valide ou la refuse : niveau 3 d'automatisation sur 5.
+4. **Lectures des graphiques** : sous chaque graphique, une interprétation est calculée à partir des données (évolution sur 12 mois, part des flux, précision du modèle, rangs CPPI, écarts CNUCED, état AIS, pics météo). Elle se met à jour automatiquement avec les données.
+5. **Recommandations** : règles simples appliquées aux indicateurs (pic prévu, mois anormal récent, part de vides élevée, météo). Le système recommande une action, le responsable de la planification la valide ou la refuse : niveau 3 d'automatisation sur 5.
 
 ## Limites
 
@@ -87,4 +88,4 @@ Voir `data/sources.csv` (adresse et date de récupération de chaque source), é
 | 9. Intelligence | Holt-Winters + MAE sur 12 mois (fourchette) ; anomalies à 2 écarts-types ; seuils d'alerte météo ; règles de recommandation | Tuile 3, section Volumes, section Recommandations |
 | 10. Robustesse | Chaque source manquante affiche un message clair au lieu de bloquer l'écran | Testé avec sources absentes |
 | 11. Interface | Charte violet et rose, icônes au trait, tuiles à 4 éléments (valeur, référence, tendance, fraîcheur), bande de traçabilité des sources | Écran unique, lisible par un non-spécialiste |
-| 12. Mise en ligne | Dépôt GitHub (sans clé) puis Streamlit Cloud, clé AIS dans les Secrets | Lien du tableau de bord |
+| 12. Mise en ligne | Dépôt GitHub (sans clé) puis Streamlit Cloud, clé AIS dans les Secrets | https://san-pedro-bay.streamlit.app/ |
